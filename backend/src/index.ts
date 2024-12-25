@@ -6,6 +6,7 @@ import {
   WebSocketResponse,
 } from "shared/dist/models";
 import WebSocket from "ws";
+import { Database } from "./database";
 
 const server = new WebSocket.Server({ port: 8080 });
 
@@ -14,6 +15,8 @@ class MyWebSocket extends WebSocket {
 }
 
 const sockets = new Set<MyWebSocket>();
+
+Database.init();
 
 server.on("connection", (socket: MyWebSocket) => {
   sockets.add(socket);
@@ -67,7 +70,9 @@ function handleMessage(socket: MyWebSocket, message: string) {
         fromUser: socket.userName ?? "Unknown User",
         text: input.payload.text,
       };
-      broadcast({ type: "message", payload });
+      const newMessage: WebSocketResponse = { type: "message", payload };
+      broadcast(newMessage);
+      Database.updateHistory(payload);
       break;
     }
   }
